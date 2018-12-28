@@ -69,8 +69,6 @@ class LoginScreen(GridLayout):
         self.username.bind(text=self._on_type_username)
         self.password.bind(on_text_validate=self._on_validate)
 
-    def _on_keydown(window, keycode, text, modifiers):
-        print(keycode)
 
     def _on_type_username(self, instance, value):
         if re.search("\t",value):
@@ -109,12 +107,19 @@ class LoginScreen(GridLayout):
             self.USERNAME=userdata[1]
             self.NAME=userdata[2]
             dbHash=userdata[4]
-            self.USERNAME
+            if userdata[5] == 1:
+                self.ADMIN=True
+            else:
+                self.ADMIN=False
+            if userdata[6] == 1:
+                self.ENABLED=True
+            else:
+                self.ENABLED=False
         else:
             dbHash=None
         
         passwordHash=self.passHash.hexdigest()
-        if ( passwordHash == dbHash ):
+        if ( passwordHash == dbHash and self.ENABLED == 1 ):
             self.makePopup("Login succeeded!")
             self.loadLoggedMenu()
         else:
@@ -123,12 +128,13 @@ class LoginScreen(GridLayout):
 
 
     def loadLoggedMenu(self,instance=None):
+        
         self.clear_widgets()
         self.btn1 = Button(text="Start Nanodrop")
         self.btn1.bind(on_press=self.startProgram)             
-        self.btn2 = Button(text="settings") #Set nanodrop path
-        self.btn2.bind(on_press=self.loadSettingsMenu)
-        self.btn3 = Button(text="admin") #Create user, Change password, see all users
+        self.btn2 = Button(text="settings") #change password ?name?
+        self.btn2.bind(on_press=self.loadChangePasswordMenu)
+        self.btn3 = Button(text="admin") #Create user, Change path, see all users
         self.btn3.bind(on_press=self.loadAdminMenu)             
         self.btn4 = Button(text="show activity") #Table, export data
         self.btn4.bind(on_press=self.showActivity)   
@@ -137,7 +143,8 @@ class LoginScreen(GridLayout):
         #Login name and logout button
         self.add_widget(self.btn1)
         self.add_widget(self.btn2)
-        self.add_widget(self.btn3)
+        if self.ADMIN:
+            self.add_widget(self.btn3)
         self.add_widget(self.btn4)
 
 
@@ -173,17 +180,19 @@ class LoginScreen(GridLayout):
         self.add_widget(Label(text=self.titles,markup=True,halign="center"))
         self.btn1 = Button(text="create user")
         self.btn1.bind(on_press=self.loadCreateUserMenu)   
-        self.btn2 = Button(text="change password") #Set nanodrop path
-        self.btn2.bind(on_press=self.loadChangePasswordMenu)
+        self.btn2 = Button(text="change path") #Set nanodrop path
+        self.btn2.bind(on_press=self.loadSettingsMenu)
         self.btn3 = Button(text="see users") #Create user, Change password, see all users
         self.btn3.bind(on_press=self.loadShowUsers)
         self.btn4 = Button(text="back to main menu") #Table, export data
         self.btn4.bind(on_press=self.loadLoggedMenu)
 
 
-        self.add_widget(self.btn1)
+        if(self.ADMIN):
+            self.add_widget(self.btn1)
         self.add_widget(self.btn2)
-        self.add_widget(self.btn3)
+        if(self.ADMIN):
+            self.add_widget(self.btn3)
         self.add_widget(self.btn4)
 
 
