@@ -19,7 +19,7 @@ class Db:
 		self.conn.commit()
 
 	def listUsers(self):
-		self.c.execute('SELECT user, name, unit, admin, enabled FROM users')
+		self.c.execute('SELECT id, user, name, unit, admin, enabled FROM users')
 		return self.c.fetchall()
 
 	def logActivity(self,usernameId):
@@ -44,4 +44,9 @@ class Db:
 	def setPassword(self,id,hash):
 		data=(hash,id)
 		self.c.execute('UPDATE users SET hash=? WHERE id=?', data)		
+		self.conn.commit()
+
+	def setUsersAttr(self,id,value,attr):
+		data=(value,id)
+		self.c.execute('UPDATE users SET '+attr+'=? WHERE id=?',data)
 		self.conn.commit()

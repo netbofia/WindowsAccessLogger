@@ -10,12 +10,13 @@ from kivy.uix.progressbar import ProgressBar
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 
+from functools import partial
 from database import Db
 
 import sqlite3
 import hashlib
 import subprocess
-
+import re
 ## TODO
 ##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! SHOULD ONLY ALLOW ONE TO OPEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -48,7 +49,7 @@ class LoginScreen(GridLayout):
         self.username = TextInput(multiline=False)
         self.password = TextInput(password=True, multiline=False)
         self.button = Button(text="Login",size_hint_x=None, width=100)
-        self.button.bind(on_press=self.callback)
+        self.button.bind(on_press=self._on_validate)
         
         self.loginGrid=GridLayout(cols=3,row_force_default=True,row_default_height=40)
         self.loginGrid.add_widget(Label(text='username',halign="right"))
@@ -64,6 +65,19 @@ class LoginScreen(GridLayout):
         ##self.db=Db()
         ##self.loadLoggedMenu()
         ###### ###### #################
+        self.username.focus=True
+        self.username.bind(text=self._on_type_username)
+        self.password.bind(on_text_validate=self._on_validate)
+
+    def _on_keydown(window, keycode, text, modifiers):
+        print(keycode)
+
+    def _on_type_username(self, instance, value):
+        if re.search("\t",value):
+            ##Change this somehow to on keydown
+            instance.text=value.replace("\t","")
+            instance.focus=False
+            self.password.focus=True
 
 
     def makePopup(self,content):
@@ -79,8 +93,9 @@ class LoginScreen(GridLayout):
                 size=(200,200))
 
         popupButton.bind(on_press=self.popup.dismiss)
+        
 
-    def callback(self,instance):
+    def _on_validate(self,instance):
         self.passHash=hashlib.sha256()
         self.passHash.update(bytes(self.password.text, 'utf-8'))
         self.validateLogin()
@@ -124,6 +139,10 @@ class LoginScreen(GridLayout):
         self.add_widget(self.btn2)
         self.add_widget(self.btn3)
         self.add_widget(self.btn4)
+
+
+
+ 
 
 
     def userPanel(self,instance):
@@ -347,6 +366,13 @@ class LoginScreen(GridLayout):
             except sqlite3.OperationalError as err:
                 self.makePopup("Error: "+err)
                 self.popup.open()
+    def switchState(self,instance,value,**rest):
+        if(value):
+            boolean=1
+        else:
+            boolean=0
+
+        self.db.setUsersAttr(rest['userId'],boolean,rest['switchType'])
 
     def loadShowUsers(self, instance):
         TABLE_HEADER="30sp"
@@ -364,9 +390,34 @@ class LoginScreen(GridLayout):
 
         self.add_widget(settingsGrid)
         
+        self.switches={}
+
         for row in self.db.listUsers():
-            for cell in row:
+            for cell in row[1:4]: #Exclude ID and booleans
                 settingsGrid.add_widget(Label(text=str(cell),halign="center"))
+
+            if( row[4] is 1 ):    
+                admin=True
+            else:
+                admin=False
+            if( row[5] is 1 ):
+                enabled=True
+            else:
+                enabled=False
+            
+            id=row[0]
+
+            self.switches["admin"+str(id)]=Switch(active=admin)
+            self.switches["enabled"+str(id)]=Switch(active=enabled)    
+            settingsGrid.add_widget(self.switches["admin"+str(id)])
+            settingsGrid.add_widget(self.switches["enabled"+str(id)])
+    
+            #append extra parameters
+            switchCallBackAdmin=partial(self.switchState,userId=id,switchType="admin")
+            switchCallBackEnabled=partial(self.switchState,userId=id,switchType="enabled")
+            self.switches["admin"+str(id)].bind(active=switchCallBackAdmin)
+            self.switches["enabled"+str(id)].bind(active=switchCallBackEnabled)
+
 
 
 
