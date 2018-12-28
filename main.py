@@ -188,11 +188,9 @@ class LoginScreen(GridLayout):
         self.btn4.bind(on_press=self.loadLoggedMenu)
 
 
-        if(self.ADMIN):
-            self.add_widget(self.btn1)
+        self.add_widget(self.btn1)
         self.add_widget(self.btn2)
-        if(self.ADMIN):
-            self.add_widget(self.btn3)
+        self.add_widget(self.btn3)
         self.add_widget(self.btn4)
 
 
@@ -225,26 +223,43 @@ class LoginScreen(GridLayout):
         self.add_widget(self.btn2)
 
 
+
+    def test(self,instance):
+        self.clear_widgets()
+        layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
+        # Make sure the height is such that there is something to scroll.
+        layout.bind(minimum_height=layout.setter('height'))
+        for i in range(100):
+            btn = Button(text=str(i), size_hint_y=None,height=40)
+            layout.add_widget(btn)
+        root = ScrollView(size_hint=(1, None), size=(Window.width, Window.height/2))
+        root.add_widget(layout)
+        self.add_widget(root)
+
     def showActivity(self,instance):
         TABLE_HEADER="30sp"
 
         self.clear_widgets()
         self.add_widget(Label(text=self.titles,markup=True,halign="center"))
         self.userPanel(self)
-        settingsGrid=GridLayout(cols=4,row_force_default=True,row_default_height=40)
-        settingsGrid.add_widget(Label(text="Group",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
-        settingsGrid.add_widget(Label(text="Name",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
-        settingsGrid.add_widget(Label(text="Date",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=200))
-        settingsGrid.add_widget(Label(text="Samples",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
+        tableHeader=GridLayout(cols=4,spacing=10,size_hint_y=None)
+        tableHeader.add_widget(Label(text="Group",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100,height=80))
+        tableHeader.add_widget(Label(text="Name",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100,height=80))
+        tableHeader.add_widget(Label(text="Date",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=200,height=80))
+        tableHeader.add_widget(Label(text="Samples",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100,height=80))
+        self.add_widget(tableHeader)
+        settingsGrid=GridLayout(cols=4,spacing=10,size_hint_y=None,row_default_height=40)
+        settingsGrid.bind(minimum_height=settingsGrid.setter('height'))
+
         
-        self.scrollView=ScrollView(size_hint_x=1, size_hint_y=None)
-        self.scrollView.add_widget(settingsGrid)
-        self.add_widget(self.scrollView)
         
         for row in self.db.getLogs(4):
             for cell in row:
-                settingsGrid.add_widget(Label(text=str(cell),halign="center"))
-
+                settingsGrid.add_widget(Label(text=str(cell),halign="center",height=80))
+                
+        self.scrollView=ScrollView(size_hint=(1,None),size=(Window.width, Window.height/2))
+        self.scrollView.add_widget(settingsGrid)
+        self.add_widget(self.scrollView)
 
     def savePath(self,instance):    
         #Check that path exists
@@ -389,21 +404,27 @@ class LoginScreen(GridLayout):
         self.clear_widgets()
         self.add_widget(Label(text=self.titles,markup=True,halign="center"))
         self.userPanel(self)
-        settingsGrid=GridLayout(cols=5,row_force_default=True,row_default_height=40)
-        settingsGrid.add_widget(Label(text="User",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
-        settingsGrid.add_widget(Label(text="Name",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
-        settingsGrid.add_widget(Label(text="Group",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=200))
-        settingsGrid.add_widget(Label(text="admin",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
-        settingsGrid.add_widget(Label(text="enabled",font_size=TABLE_HEADER,halign="center",size_hint_x=None, width=100))
+        settingsGrid=GridLayout(cols=5,row_default_height=40,size=(Window.width,40))
+        settingsGrid.add_widget(Label(text="User",font_size=TABLE_HEADER,halign="center",size_hint_x=None))
+        settingsGrid.add_widget(Label(text="Name",font_size=TABLE_HEADER,halign="center",size_hint_x=None))
+        settingsGrid.add_widget(Label(text="Group",font_size=TABLE_HEADER,halign="center",size_hint_x=None))
+        settingsGrid.add_widget(Label(text="admin",font_size=TABLE_HEADER,halign="center",size_hint_x=None))
+        settingsGrid.add_widget(Label(text="enabled",font_size=TABLE_HEADER,halign="center",size_hint_x=None))
         
 
         self.add_widget(settingsGrid)
         
         self.switches={}
 
+        
+        usersGrid=GridLayout(cols=5,spacing=10,size_hint_y=None,row_default_height=40)
+        
+        usersGrid.bind(minimum_height=usersGrid.setter('height'))
+ 
+
         for row in self.db.listUsers():
             for cell in row[1:4]: #Exclude ID and booleans
-                settingsGrid.add_widget(Label(text=str(cell),halign="center"))
+                usersGrid.add_widget(Label(text=str(cell),halign="center"))
 
             if( row[4] is 1 ):    
                 admin=True
@@ -418,8 +439,9 @@ class LoginScreen(GridLayout):
 
             self.switches["admin"+str(id)]=Switch(active=admin)
             self.switches["enabled"+str(id)]=Switch(active=enabled)    
-            settingsGrid.add_widget(self.switches["admin"+str(id)])
-            settingsGrid.add_widget(self.switches["enabled"+str(id)])
+            
+            usersGrid.add_widget(self.switches["admin"+str(id)])
+            usersGrid.add_widget(self.switches["enabled"+str(id)])
     
             #append extra parameters
             switchCallBackAdmin=partial(self.switchState,userId=id,switchType="admin")
@@ -427,7 +449,9 @@ class LoginScreen(GridLayout):
             self.switches["admin"+str(id)].bind(active=switchCallBackAdmin)
             self.switches["enabled"+str(id)].bind(active=switchCallBackEnabled)
 
-
+        self.scrollView=ScrollView(size_hint=(1,None),size=(Window.width, Window.height/2))
+        self.scrollView.add_widget(usersGrid)
+        self.add_widget(self.scrollView)
 
 
 class MainMenu(App):
