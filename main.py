@@ -171,7 +171,8 @@ class LoginScreen(GridLayout):
     def startProgram(self,instance):
         self.makePopup("Simulating Nanodrop!")
         self.popup.open()
-        #subprocess.call(["c:\\"])
+        path=self.db.getPath()
+        subprocess.call([path])
 
         self.db.logActivity(self.ID) 
 
